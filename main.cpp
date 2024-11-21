@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <fstream>
 
 using namespace std;
 
@@ -21,6 +22,9 @@ public:
         this->quantity = quantity;
     }
 
+    // Default constructor for reading from file
+    Product() : id(0), name(""), price(0.0), quantity(0) {}
+
     // Getter functions for product details
     int getId() const { return id; }
     string getName() const { return name; }
@@ -40,6 +44,19 @@ public:
     // Function to calculate the total price for a product (price * quantity)
     double calculateTotal() const {
         return price * quantity;
+    }
+
+    // Function to save the product data to a file
+    void saveToFile(ofstream& outFile) const {
+        outFile << id << "\n" << name << "\n" << price << "\n" << quantity << "\n";
+    }
+
+    // Function to load product data from a file
+    void loadFromFile(ifstream& inFile) {
+        inFile >> id;
+        inFile.ignore();  // Ignore the newline character after integer input
+        getline(inFile, name);
+        inFile >> price >> quantity;
     }
 };
 
@@ -89,8 +106,43 @@ void generateBill(const vector<Product>& products) {
     cout << "Grand Total: " << grandTotal << endl;
 }
 
+// Function to save products to a file
+void saveProductsToFile(const vector<Product>& products, const string& filename) {
+    ofstream outFile(filename);
+    if (outFile.is_open()) {
+        for (const auto& product : products) {
+            product.saveToFile(outFile);
+        }
+        outFile.close();
+        cout << "Products saved to file.\n";
+    } else {
+        cout << "Error opening file for saving.\n";
+    }
+}
+
+// Function to load products from a file
+void loadProductsFromFile(vector<Product>& products, const string& filename) {
+    ifstream inFile(filename);
+    if (inFile.is_open()) {
+        Product temp;
+        while (inFile) {
+            temp.loadFromFile(inFile);
+            if (inFile) {  // Check if it's not the end of the file
+                products.push_back(temp);
+            }
+        }
+        inFile.close();
+        cout << "Products loaded from file.\n";
+    } else {
+        cout << "Error opening file for loading.\n";
+    }
+}
+
 int main() {
     vector<Product> products;
+    string filename = "products.txt";  // File to store product data
+    loadProductsFromFile(products, filename);  // Load existing products from file
+
     int choice;
 
     do {
@@ -98,7 +150,8 @@ int main() {
         cout << "1. Display Products\n";
         cout << "2. Add New Product\n";
         cout << "3. Generate Bill\n";
-        cout << "4. Exit\n";
+        cout << "4. Save Products to File\n";
+        cout << "5. Exit\n";
         cout << "Enter your choice: ";
         cin >> choice;
 
@@ -113,13 +166,16 @@ int main() {
                 generateBill(products);
                 break;
             case 4:
+                saveProductsToFile(products, filename);
+                break;
+            case 5:
                 cout << "Exiting program...\n";
                 break;
             default:
                 cout << "Invalid choice. Please try again.\n";
                 break;
         }
-    } while (choice != 4);
+    } while (choice != 5);
 
     return 0;
 }
